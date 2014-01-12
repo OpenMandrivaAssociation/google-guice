@@ -1,40 +1,51 @@
+%{?_javapackages_macros:%_javapackages_macros}
+%if 0%{?fedora}
+%bcond_without extensions
+%endif
+
 %global short_name guice
 
 Name:           google-%{short_name}
-Version:        3.0
-Release:        0.1.rc2
-Summary:        Lightweight dependency injection framework
+Version:        3.1.3
+Release:        8.1%{?dist}
+Summary:        Lightweight dependency injection framework for Java 5 and above
 
-
-Group:          Development/Java
 License:        ASL 2.0
-URL:            http://code.google.com/p/%{name}
-
-# svn export -r1219 http://google-guice.googlecode.com/svn/trunk/ guice-2.0-1219
-# tar caf guice-2.0-1219.tar.xz guice-2.0-1219
-Source0:        https://%{name}.googlecode.com/files/%{short_name}-%{version}-rc2-src.zip
-
-# patch from http://github.com/sonatype/sisu-guice
-# excluded changes to pom.xml files that changed groupIds
-# needed for maven 3 to work
-Patch0:         sisu-custom.patch
-
+URL:            https://github.com/sonatype/sisu-%{short_name}
+# ./create-tarball.sh %%{version}
+Source0:        %{name}-%{version}.tar.xz
+Source1:        create-tarball.sh
 BuildArch:      noarch
 
-BuildRequires:  java-devel >= 0:1.6.0
-BuildRequires:  ant
-BuildRequires:  jarjar => 1.0
-BuildRequires:  cglib
-BuildRequires:  aqute-bndlib
-BuildRequires:  objectweb-asm
-BuildRequires:  junit
+BuildRequires:  maven-local >= 3.2.4-2
+BuildRequires:  maven-remote-resources-plugin
+BuildRequires:  munge-maven-plugin
+BuildRequires:  apache-resource-bundles
+BuildRequires:  aopalliance
 BuildRequires:  atinject
-BuildRequires:  zip
+BuildRequires:  cglib
+BuildRequires:  guava
 BuildRequires:  slf4j
 
-Requires:       java >= 0:1.6.0
-Requires(post): jpackage-utils
-Requires(postun): jpackage-utils
+%if %{with extensions}
+BuildRequires:  hibernate-jpa-2.0-api
+BuildRequires:  springframework-beans
+BuildRequires:  tomcat-servlet-3.0-api
+%endif
+
+# Test dependencies:
+%if 0
+BuildRequires:  maven-surefire-provider-testng
+BuildRequires:  aqute-bnd
+BuildRequires:  atinject-tck
+BuildRequires:  easymock2
+BuildRequires:  felix-framework
+BuildRequires:  hibernate3-entitymanager
+BuildRequires:  mvn(org.hsqldb:hsqldb-j5)
+BuildRequires:  testng
+%endif
+
+Provides:       %{short_name} = %{version}-%{release}
 
 %description
 Put simply, Guice alleviates the need for factories and the use of new
@@ -55,113 +66,270 @@ with at least three use cases. When in doubt, we leave it out. We
 build general functionality which enables you to extend Guice rather
 than adding every feature to the core framework.
 
-%package        javadoc
-Summary:        API documentation for %{name}
-Group:          Development/Java
-Requires:       jpackage-utils
+%package -n %{short_name}-parent
+Summary:        Guice parent POM
 
-%description    javadoc
-%{summary}.
+%description -n %{short_name}-parent
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides parent POM for Guice modules.
+
+%if %{with extensions}
+
+%package -n %{short_name}-assistedinject
+Summary:        AssistedInject extension module for Guice
+
+%description -n %{short_name}-assistedinject
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides AssistedInject module for Guice.
+
+%package -n %{short_name}-extensions
+Summary:        Extensions for Guice
+
+%description -n %{short_name}-extensions
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides extensions POM for Guice.
+
+%package -n %{short_name}-grapher
+Summary:        Grapher extension module for Guice
+
+%description -n %{short_name}-grapher
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides Grapher module for Guice.
+
+%package -n %{short_name}-jmx
+Summary:        JMX extension module for Guice
+
+%description -n %{short_name}-jmx
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides JMX module for Guice.
+
+%package -n %{short_name}-jndi
+Summary:        JNDI extension module for Guice
+
+%description -n %{short_name}-jndi
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides JNDI module for Guice.
+
+%package -n %{short_name}-multibindings
+Summary:        MultiBindings extension module for Guice
+
+%description -n %{short_name}-multibindings
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides MultiBindings module for Guice.
+
+%package -n %{short_name}-persist
+Summary:        Persist extension module for Guice
+
+%description -n %{short_name}-persist
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides Persist module for Guice.
+
+%package -n %{short_name}-servlet
+Summary:        Servlet extension module for Guice
+
+%description -n %{short_name}-servlet
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides Servlet module for Guice.
+
+%package -n %{short_name}-spring
+Summary:        Spring extension module for Guice
+
+%description -n %{short_name}-spring
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides Spring module for Guice.
+
+%package -n %{short_name}-throwingproviders
+Summary:        ThrowingProviders extension module for Guice
+
+%description -n %{short_name}-throwingproviders
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides ThrowingProviders module for Guice.
+
+%endif # with extensions
+
+%package javadoc
+Summary:        API documentation for Guice
+
+Provides:       %{short_name}-javadoc = %{version}-%{release}
+
+%description javadoc
+This package provides %{summary}.
+
 
 %prep
-%setup -q -n %{short_name}-%{version}-rc2-src
-%patch0
+%setup -q -n %{name}-%{version}
 
-# remove parent definition referencing google-parent
-sed -ie '/<parent>/,/<\/parent/ {d}' pom.xml
+# We don't have struts2 in Fedora yet.
+%pom_disable_module struts2 extensions
 
-# remove bundled libraries
-find . -name '*.class' -delete
-find . -name '*.bar' -delete
-# we'll repack munge.jar so don't delete it just yet
-find . -name '*.jar' -not -name 'munge.jar' -delete
+# Remove additional build profiles, which we don't use anyways
+# and which are only pulling additional dependencies.
+%pom_xpath_remove "pom:profile[pom:id='guice.with.jarjar']" core
 
-# re-create symlinks
-pushd lib/build
-build-jar-repository -s -p . aqute-bndlib cglib slf4j \
-                     jarjar junit objectweb-asm \
+# Animal sniffer is only causing problems. Disable it for now.
+%pom_remove_plugin :animal-sniffer-maven-plugin core
+%pom_remove_plugin :animal-sniffer-maven-plugin extensions
 
-mv aqute-bndlib*.jar bnd-0.0.384.jar
-mv cglib*.jar cglib-2.2.1-snapshot.jar
-mv jarjar*.jar jarjar-snapshot.jar
-mv objectweb-asmasm-all.jar asm-3.1.jar
+# We don't have the custom doclet used by upstream. Remove
+# maven-javadoc-plugin to generate javadocs with default style.
+%pom_remove_plugin :maven-javadoc-plugin
 
-popd
-ln -sf `build-classpath atinject` lib/javax.inject.jar
+%pom_remove_dep javax.persistence:persistence-api extensions/persist
+%pom_add_dep org.hibernate.javax.persistence:hibernate-jpa-2.0-api extensions/persist
 
-# there is munge.jar defining ant task it's a mixture of files, but
-# there are sources in jar so we re-compile the jar to verify it
-# builds
-mkdir munge-repack
-unzip lib/build/munge.jar -d munge-repack
-rm lib/build/munge.jar
+# remove test dependency to make sure we don't produce requires
+# see #1007498
+%pom_xpath_remove "pom:dependency[pom:classifier[text()='tests']]" extensions
 
-pushd munge-repack
-rm *.class
-javac -cp `build-classpath ant junit` *.java
-zip -r ../lib/build/munge.jar .
-popd
+# Don't try to build extension modules unless they are needed
+%if %{without extensions}
+%pom_disable_module extensions
+%endif
 
-rm -rf munge-repack
-#end munge.jar repack
+# Upstream doesn't generate pom.properties, but we need it.
+sed -i "/<addMavenDescriptor>/d" pom.xml
+
 
 %build
-# create no-aop build environment
-ant no_aop
+%if %{with extensions}
+%mvn_alias ":guice-{assistedinject,grapher,jmx,jndi,multibindings,persist,\
+servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
+%endif # with extensions
 
-pushd build/no_aop/
-# javadoc fails without this directory
-mkdir -p servlet/lib/build
+%mvn_package :::no_aop: sisu-guice
 
-ant -Dversion=%{version} jar
-popd
+%mvn_file  ":guice-{*}"  %{short_name}/guice-@1
+%mvn_file  ":sisu-guice" %{short_name}/%{name} %{name}
+%mvn_alias ":sisu-guice" "com.google.inject:guice"
+# Skip tests because of missing dependency (hsqldb-j5).
+%mvn_build -f -s
 
 %install
-install -d -m 0755 $RPM_BUILD_ROOT%{_javadir}
-pushd build/no_aop
-install -pm 644 build/dist/%{short_name}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
-ln -sf %{name}.jar $RPM_BUILD_ROOT%{_javadir}/%{short_name}.jar
+%mvn_install
 
-install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
-install -pm 644 pom.xml $RPM_BUILD_ROOT/%{_mavenpomdir}/JPP-%{name}-parent.pom
-%add_to_maven_depmap com.google.inject %{short_name}-parent %{version} JPP %{name}-parent
+%files -f .mfiles-sisu-guice
 
-install -pm 644 core/pom.xml $RPM_BUILD_ROOT/%{_mavenpomdir}/JPP-%{name}.pom
-%add_to_maven_depmap com.google.inject %{short_name} %{version} JPP %{name}
-# provide sisu group/artifact (should be just mavenized google-guice
-# with
-%add_to_maven_depmap org.sonatype.sisu sisu-%{short_name} %{version} JPP %{name}
-popd
-
-# javadoc
-install -d -m 0755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -r javadoc/* %{buildroot}%{_javadocdir}/%{name}
-
-%pre javadoc
-# workaround for rpm bug, can be removed in F-17
-[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
-rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
-
-
-%post
-%update_maven_depmap
-
-%postun
-%update_maven_depmap
-
-
-%files
-%defattr(-,root,root,-)
+%files -n %{short_name}-parent -f .mfiles-guice-parent
 %doc COPYING
-%{_javadir}/*.jar
-%{_mavenpomdir}/*
-%{_mavendepmapfragdir}/*
 
+%if %{with extensions}
+%files -n %{short_name}-assistedinject -f .mfiles-guice-assistedinject
+%files -n %{short_name}-extensions -f .mfiles-guice-extensions
+%files -n %{short_name}-grapher -f .mfiles-guice-grapher
+%files -n %{short_name}-jmx -f .mfiles-guice-jmx
+%files -n %{short_name}-jndi -f .mfiles-guice-jndi
+%files -n %{short_name}-multibindings -f .mfiles-guice-multibindings
+%files -n %{short_name}-persist -f .mfiles-guice-persist
+%files -n %{short_name}-servlet -f .mfiles-guice-servlet
+%files -n %{short_name}-spring -f .mfiles-guice-spring
+%files -n %{short_name}-throwingproviders -f .mfiles-guice-throwingproviders
+%endif # with extensions
 
-%files javadoc
-%defattr(-,root,root,-)
+%files javadoc -f .mfiles-javadoc
 %doc COPYING
-%doc %{_javadocdir}/%{name}
 
 
+%changelog
+* Wed Sep 25 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-8
+- Install no_aop artifact after javapackages update
 
+* Thu Sep 12 2013 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.1.3-7
+- Remove dependency on tests from runtime
+- Related: rhbz#1007498
+
+* Tue Sep 10 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-6
+- Install no_aop artifact
+- Resolves: rhbz#1006491
+
+* Wed Sep  4 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-5
+- Enable pom.properties
+- Resolves: rhbz#1004360
+
+* Wed Aug 07 2013 Michal Srb <msrb@redhat.com> - 3.1.3-4
+- Add create-tarball.sh script to SRPM
+
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.1.3-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Wed Apr 24 2013 Michal Srb <msrb@redhat.com> - 3.1.3-2
+- Revert update to 3.1.4 (uses asm4)
+
+* Thu Mar 14 2013 Michal Srb <msrb@redhat.com> - 3.1.3-1
+- Update to upstream version 3.1.3
+- Remove bundled JARs from tarball
+
+* Wed Feb 06 2013 Java SIG <java-devel@lists.fedoraproject.org> - 3.1.2-11
+- Update for https://fedoraproject.org/wiki/Fedora_19_Maven_Rebuild
+- Replace maven BuildRequires with maven-local
+
+* Thu Jan 31 2013 Michal Srb <msrb@redhat.com> - 3.1.2-10
+- Remove all requires
+- Correct usage of xmvn's macros
+
+* Mon Jan 28 2013 Michal Srb <msrb@redhat.com> - 3.1.2-9
+- Build with xmvn
+
+* Fri Nov 16 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-8
+- Remove README
+
+* Fri Nov 16 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-7
+- Repackage tarball
+
+* Fri Nov  9 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-6
+- Don't try to build extension modules unless they are needed
+
+* Fri Nov  9 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-5
+- Conditionalize %%install section too
+
+* Fri Nov  9 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-4
+- Conditionally disable extensions
+
+* Thu Nov  1 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-3
+- Update to new add_maven_depmap macro
+
+* Wed Oct 31 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.1.2-2
+- Use new generated maven filelist feature from javapackages-tools
+
+* Fri Oct  5 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.2-1
+- Complete rewrite of the spec file
+- New upstream, to ease future maintenance
+- Build with maven instead of ant
+- Split into multiple subpackages
+
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0-0.7.rc2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Thu Feb  9 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-0.6.rc2
+- Temporary fix for maven buildroots
+
+* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0-0.5.rc2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Wed Oct 12 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-0.4.rc2
+- Build with aqute-bnd (#745176)
+- Use new maven macros
+- Few packaging tweaks
+
+* Tue May 24 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-0.3.rc2
+- Add cglib and atinject to R
+
+* Thu May 12 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-0.2.rc2
+- Remove test and missing deps from pom.xml
+
+* Tue Mar  1 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-0.1.rc2
+- Update to 3.0rc2
+- Changes according to new guidelines (versionless jars & javadocs)
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.0-4.1219svn
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Thu Oct 14 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 2.0-3.1219svn
+- Add java-devel >= 1:1.6.0 to BR
+
+* Wed Oct 13 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 2.0-2.1219svn
+- Moved munge repacking to prep
+- Added -Dversion to change generated manifest version
+- Removed http part of URL
+
+* Thu Oct  7 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 2.0-1.1219svn
+- Initial version of the package
