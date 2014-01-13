@@ -1,13 +1,13 @@
 %{?_javapackages_macros:%_javapackages_macros}
-%if 0%{?fedora}
+#$if 0${?fedora}
 %bcond_without extensions
-%endif
+#$endif
 
 %global short_name guice
 
 Name:           google-%{short_name}
 Version:        3.1.3
-Release:        8.1%{?dist}
+Release:        8.2%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 
 License:        ASL 2.0
