@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e -x
 test $# -eq 1
-test ! -d sisu-guice
-git clone git://github.com/sonatype/sisu-guice.git
+#test ! -d sisu-guice
+#git clone git://github.com/sonatype/sisu-guice.git
 cd ./sisu-guice
 git checkout sisu-guice-${1}
 git branch unbundled-guice-${1}
