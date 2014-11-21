@@ -1,15 +1,13 @@
 %{?_javapackages_macros:%_javapackages_macros}
-#$if 0${?fedora}
 %bcond_without extensions
-#$endif
 
 %global short_name guice
 
 Name:           google-%{short_name}
-Version:        3.1.10
-Release:        1
+Version:        3.2.4
+Release:        1%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
-
+Group:          System/Libraries
 License:        ASL 2.0
 URL:            https://github.com/sonatype/sisu-%{short_name}
 # ./create-tarball.sh %%{version}
@@ -138,6 +136,13 @@ Summary:        Spring extension module for Guice
 Guice is a lightweight dependency injection framework for Java 5
 and above. This package provides Spring module for Guice.
 
+%package -n %{short_name}-testlib
+Summary:        TestLib extension module for Guice
+
+%description -n %{short_name}-testlib
+Guice is a lightweight dependency injection framework for Java 5
+and above. This package provides TestLib module for Guice.
+
 %package -n %{short_name}-throwingproviders
 Summary:        ThrowingProviders extension module for Guice
 
@@ -149,7 +154,7 @@ and above. This package provides ThrowingProviders module for Guice.
 
 %package javadoc
 Summary:        API documentation for Guice
-
+Group:          Documentation
 Provides:       %{short_name}-javadoc = %{version}-%{release}
 
 %description javadoc
@@ -179,15 +184,13 @@ This package provides %{summary}.
 
 # remove test dependency to make sure we don't produce requires
 # see #1007498
+%pom_remove_dep :guava-testlib extensions
 %pom_xpath_remove "pom:dependency[pom:classifier[text()='tests']]" extensions
 
 # Don't try to build extension modules unless they are needed
 %if %{without extensions}
 %pom_disable_module extensions
 %endif
-
-# Upstream doesn't generate pom.properties, but we need it.
-sed -i "/<addMavenDescriptor>/d" pom.xml
 
 
 %build
@@ -208,6 +211,7 @@ servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
 %mvn_install
 
 %files -f .mfiles-sisu-guice
+%dir %{_javadir}/%{short_name}
 
 %files -n %{short_name}-parent -f .mfiles-guice-parent
 %doc COPYING
@@ -222,6 +226,7 @@ servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
 %files -n %{short_name}-persist -f .mfiles-guice-persist
 %files -n %{short_name}-servlet -f .mfiles-guice-servlet
 %files -n %{short_name}-spring -f .mfiles-guice-spring
+%files -n %{short_name}-testlib -f .mfiles-guice-testlib
 %files -n %{short_name}-throwingproviders -f .mfiles-guice-throwingproviders
 %endif # with extensions
 
@@ -230,6 +235,44 @@ servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
 
 
 %changelog
+* Mon Sep 29 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.4-1
+- Update to upstream version 3.2.4
+
+* Fri Jun  6 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.2-1
+- Update to upstream version 3.2.2
+
+* Wed May 28 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.1-2
+- Rebuild to regenerate Maven auto-requires
+
+* Wed Apr 16 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.2.1-1
+- Update to upstream version 3.2.1
+- Add testlib subpackage
+
+* Tue Mar  4 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.10-3
+- Fix directory ownership
+
+* Tue Mar 04 2014 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.1.10-3
+- Use Requires: java-headless rebuild (#1067528)
+
+* Wed Feb 19 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.10-2
+- Fix unowned directory
+
+* Tue Feb 18 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.10-1
+- Update to upstream version 3.1.10
+
+* Mon Jan 20 2014 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.9-1
+- Update to upstream version 3.1.9
+
+* Mon Nov 11 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.8-1
+- Update to upstream version 3.1.8
+
+* Wed Oct 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-10
+- Rebuild to regenerate broken POMs
+- Related: rhbz#1021484
+
+* Fri Oct 18 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-9
+- Don't force generation of pom.properties
+
 * Wed Sep 25 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.3-8
 - Install no_aop artifact after javapackages update
 
@@ -333,3 +376,4 @@ servlet,spring,throwingproviders}" "com.google.inject.extensions:guice-@1"
 
 * Thu Oct  7 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 2.0-1.1219svn
 - Initial version of the package
+
