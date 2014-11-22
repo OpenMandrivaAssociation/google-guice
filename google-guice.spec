@@ -5,7 +5,7 @@
 
 Name:           google-%{short_name}
 Version:        3.2.4
-Release:        1%{?dist}
+Release:        1.1%{?dist}
 Summary:        Lightweight dependency injection framework for Java 5 and above
 Group:          System/Libraries
 License:        ASL 2.0
