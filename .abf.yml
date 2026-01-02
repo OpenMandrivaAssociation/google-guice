@@ -1,5 +1,2 @@
-removed_sources:
-  google-guice-3.1.10.tar.xz: f5e7be8374de887a43c0ed7deea3afb71a8ff1c9
-  google-guice-3.1.3.tar.xz: 7a356b0b4ac95df7012d364faa24db36dc614f43
 sources:
-  google-guice-3.2.4.tar.xz: ae9ce5365dcb556e48f342357d7aa6d9e6fd6eed
+  google-guice-5.1.0.tar.xz: 4f026d37309ceb48e0a6377b91f12ad0334de976
